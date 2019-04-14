@@ -16,15 +16,17 @@ from subprocess import call
 from functools import partial, wraps
 import re
 import argparse
+import os
+
 
 ###########################
 # User modifiable constants
 ###########################
 language_params = {
         'c++14' : {
-            'TEMPLATE'    : 'main.cc',
-            'DEBUG_FLAGS' : '-DDEBUG',
-            'COMPILE_CMD' : 'g++ -g -std=c++14 -Wall $DBG',
+            'TEMPLATE'    : '%s/main.cpp' % os.path.dirname(os.path.realpath(__file__)),
+            'DEBUG_FLAGS' : '-Dredback',
+            'COMPILE_CMD' : 'g++ -g -std=c++14 $DBG',
             'RUN_CMD'     : './a.out'
             },
         'go'    : {
@@ -181,7 +183,7 @@ def generate_test_script(folder, language, num_tests, problem):
             'INPUT_NAME='+SAMPLE_INPUT+'\n'
             'OUTPUT_NAME='+SAMPLE_OUTPUT+'\n'
             'MY_NAME='+MY_OUTPUT+'\n'
-            'rm -R $MY_NAME* &>/dev/null\n').format(problem, param["TEMPLATE"].split('.')[1]))
+            'rm -R $MY_NAME* &>/dev/null\n').format(problem, param["TEMPLATE"].split('.')[-1]))
         test.write(
             'for test_file in $INPUT_NAME*\n'
             'do\n'
@@ -236,9 +238,9 @@ def main():
     TEMPLATE = language_params[language]["TEMPLATE"]
     for index, problem in enumerate(content.problems):
         print ('Downloading Problem %s: %s...' % (problem, content.problem_names[index]))
-        folder = '%s-%s/%s/' % (contest, language, problem)
+        folder = '%s/%s-%s/%s/' % (os.getcwd(),contest, content.name, problem)
         call(['mkdir', '-p', folder])
-        call(['cp', '-n', TEMPLATE, '%s/%s.%s' % (folder, problem, TEMPLATE.split('.')[1])])
+        call(['cp', '-n', TEMPLATE, '%s/%s.%s' % (folder, problem, TEMPLATE.split('.')[-1])])
         num_tests = parse_problem(folder, contest, problem)
         print('%d sample test(s) found.' % num_tests)
         generate_test_script(folder, language, num_tests, problem)
