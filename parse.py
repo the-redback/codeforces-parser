@@ -26,7 +26,7 @@ language_params = {
         'c++14' : {
             'TEMPLATE'    : '%s/main.cpp' % os.path.dirname(os.path.realpath(__file__)),
             'DEBUG_FLAGS' : '-Dredback',
-            'COMPILE_CMD' : 'g++ -g -std=c++14 $DBG',
+            'COMPILE_CMD' : 'g++ -std=c++14 $DBG',
             'RUN_CMD'     : './a.out'
             },
         'go'    : {
@@ -53,7 +53,12 @@ RED_F='\033[31m'
 GREEN_F='\033[32m'
 BOLD='\033[1m'
 NORM='\033[0m'
-TIME_CMD='`which time` -o time.out -f "(%es)"'
+WHICH_TIME="""if [[ "$(uname 2>/dev/null)" == "Linux" ]]; then
+  time_cmd=$(which time)
+else
+  time_cmd=$(which gtime)
+fi"""
+TIME_CMD='$time_cmd -o time.out -f "(%es)"'
 TIME_AP='`cat time.out`'
 
 # Problems parser.
@@ -180,9 +185,13 @@ def generate_test_script(folder, language, num_tests, problem):
             'if ! ' + param["COMPILE_CMD"] +' {0}.{1}; then\n'
             '    exit\n'
             'fi\n'
+            '\n'
             'INPUT_NAME='+SAMPLE_INPUT+'\n'
             'OUTPUT_NAME='+SAMPLE_OUTPUT+'\n'
             'MY_NAME='+MY_OUTPUT+'\n'
+            '\n'
+            ''+WHICH_TIME+'\n'
+            '\n'
             'rm -R $MY_NAME* &>/dev/null\n').format(problem, param["TEMPLATE"].split('.')[-1]))
         test.write(
             'for test_file in $INPUT_NAME*\n'
@@ -238,9 +247,12 @@ def main():
     TEMPLATE = language_params[language]["TEMPLATE"]
     for index, problem in enumerate(content.problems):
         print ('Downloading Problem %s: %s...' % (problem, content.problem_names[index]))
-        folder = '%s/%s-%s/%s/' % (os.getcwd(),contest, content.name, problem)
+        folder = '%s/%s-%s/%s/' % (os.getcwd(),contest, content.name.replace(' ', '_'), problem)
         call(['mkdir', '-p', folder])
         call(['cp', '-n', TEMPLATE, '%s/%s.%s' % (folder, problem, TEMPLATE.split('.')[-1])])
+        url = 'http://codeforces.com/contest/%s/problem/%s' % (contest, problem)
+        with open(folder + 'url', 'w') as test:
+            test.write("Problem link: "+url+'\n')
         num_tests = parse_problem(folder, contest, problem)
         print('%d sample test(s) found.' % num_tests)
         generate_test_script(folder, language, num_tests, problem)
