@@ -20,6 +20,7 @@ typedef long long   ll;
 #define NN          100010
 
 
+// clang-format off
 #ifdef  redback
 #define bug printf("line=%d\n",__LINE__);
 #define debug(args...) {cout<<":: "; dbg,args; cout<<endl;}
@@ -28,23 +29,19 @@ struct  debugger {template<typename T>debugger& operator , (const T& v) {cout <<
 #define bug
 #define debug(args...)
 #endif  //debugging macros
+// clang-format on
+
 
 int main() {
-	ios::sync_with_stdio(false);
-	cin.tie(0);
-#ifdef redback
-	//freopen("input.in", "r", stdin);
-	//freopen("output.in", "w", stdout);
-	//test by input1, input2  files for codeforces
-#endif
+    ios::sync_with_stdio(false); cin.tie(0);
 
-	ll t = 1, tc;
-	//cin >> tc ;
-	ll n, m;
-	while (cin >> n) {
-		ll i, j, k;
+    ll t = 1, tc;
+    //cin >> tc ;
+    ll n, m;
+    while (cin >> n ) {
+        ll i, j, k;
 
-		cout << n << "\n";
-	}
-	return 0;
+        cout << n << "\n";
+    }
+    return 0;
 }
