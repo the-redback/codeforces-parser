@@ -23,48 +23,50 @@ import os
 # User modifiable constants
 ###########################
 language_params = {
-        'c++14' : {
-            'TEMPLATE': '%s/main.cpp' % os.path.dirname(os.path.realpath(__file__)),
-            'EXTRA_FOLDER': '%s/bits' % os.path.dirname(os.path.realpath(__file__)),
-            'DEBUG_FLAGS' : '-Dredback',
-            'COMPILE_CMD' : 'g++ -std=c++14 $DBG',
-            'RUN_CMD'     : './a.out'
-            },
-        'go'    : {
-            'TEMPLATE': 'main.go',
-            'EXTRA_FOLDER': '',
-            'COMPILE_CMD' : 'go build $DBG -o a.out',
-            'DEBUG_FLAGS' : '''"-ldflags '-X=main.DEBUG=Y'"''',
-            'RUN_CMD'     : './a.out'
-            },
-        'kotlin'    : {
-            'TEMPLATE': 'main.kt',
-            'EXTRA_FOLDER': '',
-            'COMPILE_CMD' : 'kotlinc -include-runtime -d out.jar',
-            'DEBUG_FLAGS' : "-d",
-            'RUN_CMD'     : 'java -jar out.jar $DBG'
-            },
-        }
+    'c++14': {
+        'TEMPLATE': '%s/main.cpp' % os.path.dirname(os.path.realpath(__file__)),
+        'EXTRA_FOLDER': '%s/bits' % os.path.dirname(os.path.realpath(__file__)),
+        'DEBUG_FLAGS': '-Dredback',
+        'COMPILE_CMD': 'g++ -std=c++14 $DBG',
+        'RUN_CMD': './a.out'
+    },
+    'go': {
+        'TEMPLATE': 'main.go',
+        'EXTRA_FOLDER': '',
+        'COMPILE_CMD': 'go build $DBG -o a.out',
+        'DEBUG_FLAGS': '''"-ldflags '-X=main.DEBUG=Y'"''',
+        'RUN_CMD': './a.out'
+    },
+    'kotlin': {
+        'TEMPLATE': 'main.kt',
+        'EXTRA_FOLDER': '',
+        'COMPILE_CMD': 'kotlinc -include-runtime -d out.jar',
+        'DEBUG_FLAGS': "-d",
+        'RUN_CMD': 'java -jar out.jar $DBG'
+    },
+}
 
-SAMPLE_INPUT='input'
-SAMPLE_OUTPUT='output'
-MY_OUTPUT='my_output'
+SAMPLE_INPUT = 'input'
+SAMPLE_OUTPUT = 'output'
+MY_OUTPUT = 'my_output'
 
 # Do not modify these!
-VERSION='CodeForces Parser v1.5.1: https://github.com/johnathan79717/codeforces-parser'
-RED_F='\033[31m'
-GREEN_F='\033[32m'
-BOLD='\033[1m'
-NORM='\033[0m'
-WHICH_TIME="""if [[ "$(uname 2>/dev/null)" == "Linux" ]]; then
+VERSION = 'CodeForces Parser v1.5.1: https://github.com/johnathan79717/codeforces-parser'
+RED_F = '\033[31m'
+GREEN_F = '\033[32m'
+BOLD = '\033[1m'
+NORM = '\033[0m'
+WHICH_TIME = """if [[ "$(uname 2>/dev/null)" == "Linux" ]]; then
   time_cmd=$(which time)
 else
   time_cmd=$(which gtime)
 fi"""
-TIME_CMD='$time_cmd -o time.out -f "(%es)"'
-TIME_AP='`cat time.out`'
+TIME_CMD = '$time_cmd -o time.out -f "(%es)"'
+TIME_AP = '`cat time.out`'
 
 # Problems parser.
+
+
 class CodeforcesProblemParser(HTMLParser):
 
     def __init__(self, folder):
@@ -110,6 +112,8 @@ class CodeforcesProblemParser(HTMLParser):
             self.end_line = False
 
 # Contest parser.
+
+
 class CodeforcesContestParser(HTMLParser):
 
     def __init__(self, contest):
@@ -124,10 +128,11 @@ class CodeforcesContestParser(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         if self.name == '' and attrs == [('style', 'color: black'), ('href', '/contest/%s' % (self.contest))]:
-                self.start_contest = True
+            self.start_contest = True
         elif tag == 'option':
             if len(attrs) == 1:
-                regexp = re.compile(r"'[A-Z][0-9]?'") # The attrs will be something like: ('value', 'X'), or ('value', 'X1')
+                # The attrs will be something like: ('value', 'X'), or ('value', 'X1')
+                regexp = re.compile(r"'[A-Z][0-9]?'")
                 string = str(attrs[0])
                 search = regexp.search(string)
                 if search is not None:
@@ -149,6 +154,8 @@ class CodeforcesContestParser(HTMLParser):
             self.problem_name += data
 
 # Parses each problem page.
+
+
 def parse_problem(folder, contest, problem):
     url = 'http://codeforces.com/contest/%s/problem/%s' % (contest, problem)
     html = urlopen(url).read()
@@ -158,6 +165,8 @@ def parse_problem(folder, contest, problem):
     return parser.num_tests
 
 # Parses the contest page.
+
+
 def parse_contest(contest):
     url = 'http://codeforces.com/contest/%s' % (contest)
     html = urlopen(url).read()
@@ -166,36 +175,38 @@ def parse_contest(contest):
     return parser
 
 # Generates the test script.
+
+
 def generate_test_script(folder, language, num_tests, problem):
     param = language_params[language]
 
     with open(folder + 'test.sh', 'w') as test:
         test.write(
             ('#!/bin/bash\n'
-            'DBG=""\n'
-            'while getopts ":d" opt; do\n'
-            '  case $opt in\n'
-            '    d)\n'
-            '      echo "-d was selected; compiling in DEBUG mode!" >&2\n'
-            '      DBG=' + param["DEBUG_FLAGS"] +'\n'
-            '      ;;\n'
-            '    \?)\n'
-            '      echo "Invalid option: -$OPTARG" >&2\n'
-            '      ;;\n'
-            '  esac\n'
-            'done\n'
-            '\n'
-            'if ! ' + param["COMPILE_CMD"] +' {0}.{1}; then\n'
-            '    exit\n'
-            'fi\n'
-            '\n'
-            'INPUT_NAME='+SAMPLE_INPUT+'\n'
-            'OUTPUT_NAME='+SAMPLE_OUTPUT+'\n'
-            'MY_NAME='+MY_OUTPUT+'\n'
-            '\n'
-            ''+WHICH_TIME+'\n'
-            '\n'
-            'rm -R $MY_NAME* &>/dev/null\n').format(problem, param["TEMPLATE"].split('.')[-1]))
+             'DBG=""\n'
+             'while getopts ":d" opt; do\n'
+             '  case $opt in\n'
+             '    d)\n'
+             '      echo "-d was selected; compiling in DEBUG mode!" >&2\n'
+             '      DBG=' + param["DEBUG_FLAGS"] + '\n'
+             '      ;;\n'
+             '    \?)\n'
+             '      echo "Invalid option: -$OPTARG" >&2\n'
+             '      ;;\n'
+             '  esac\n'
+             'done\n'
+             '\n'
+             'if ! ' + param["COMPILE_CMD"] + ' {0}.{1}; then\n'
+             '    exit\n'
+             'fi\n'
+             '\n'
+             'INPUT_NAME='+SAMPLE_INPUT+'\n'
+             'OUTPUT_NAME='+SAMPLE_OUTPUT+'\n'
+             'MY_NAME='+MY_OUTPUT+'\n'
+             '\n'
+             ''+WHICH_TIME+'\n'
+             '\n'
+             'rm -R $MY_NAME* &>/dev/null\n').format(problem, param["TEMPLATE"].split('.')[-1]))
         test.write(
             'for test_file in $INPUT_NAME*\n'
             'do\n'
@@ -227,6 +238,7 @@ def generate_test_script(folder, language, num_tests, problem):
             .format(num_tests, BOLD, NORM, GREEN_F, RED_F, TIME_CMD, TIME_AP, run_cmd=param["RUN_CMD"]))
     call(['chmod', '+x', folder + 'test.sh'])
 
+
 def replace_char(folder_name):
     for ch in folder_name:
         if ch.isalnum() == False and ch != '-' and ch != '_' and ch != '#':
@@ -234,11 +246,13 @@ def replace_char(folder_name):
     print(fold)
 
 # Main function.
+
+
 def main():
-    print (VERSION)
+    print(VERSION)
     parser = argparse.ArgumentParser()
     parser.add_argument('--language', '-l', default="c++14", help="The programming language you want to use "
-            "(c++14, go)")
+                        "(c++14, go)")
     parser.add_argument('contest', help="")
     args = parser.parse_args()
 
@@ -246,29 +260,34 @@ def main():
     language = args.language
 
     # Find contest and problems.
-    print ('Parsing contest %s for language %s, please wait...' % (contest, language))
+    print('Parsing contest %s for language %s, please wait...' %
+          (contest, language))
     content = parse_contest(contest)
-    print (BOLD+GREEN_F+'*** Round name: '+content.name+' ***'+NORM)
-    print ('Found %d problems!' % (len(content.problems)))
+    print(BOLD+GREEN_F+'*** Round name: '+content.name+' ***'+NORM)
+    print('Found %d problems!' % (len(content.problems)))
 
     # Find problems and test cases.
     TEMPLATE = language_params[language]["TEMPLATE"]
     EXTRA_FOLDER = language_params[language]["EXTRA_FOLDER"]
     for index, problem in enumerate(content.problems):
-        print ('Downloading Problem %s: %s...' % (problem, content.problem_names[index]))
-        folder = '%s/%s-%s/%s/' % (os.getcwd(),contest, content.name.replace(' ', '_'), problem)
+        print('Downloading Problem %s: %s...' %
+              (problem, content.problem_names[index]))
+        folder = '%s/%s-%s/%s/' % (os.getcwd(), contest,
+                                   content.name.replace(' ', '_'), problem)
         call(['mkdir', '-p', folder])
-        call(['cp', '-n', TEMPLATE, '%s/%s.%s' % (folder, problem, TEMPLATE.split('.')[-1])])
+        call(['cp', '-n', TEMPLATE, '%s/%s.%s' %
+              (folder, problem, TEMPLATE.split('.')[-1])])
         call(['cp', '-nr', EXTRA_FOLDER, '%s/' % (folder)])
-        url = 'http://codeforces.com/contest/%s/problem/%s' % (contest, problem)
+        url = 'http://codeforces.com/contest/%s/problem/%s' % (
+            contest, problem)
         with open(folder + 'url', 'w') as test:
             test.write("Problem link: "+url+'\n')
         num_tests = parse_problem(folder, contest, problem)
         print('%d sample test(s) found.' % num_tests)
         generate_test_script(folder, language, num_tests, problem)
-        print ('========================================')
+        print('========================================')
 
-    print ('Use ./test.sh to run sample tests in each directory.')
+    print('Use ./test.sh to run sample tests in each directory.')
 
 
 if __name__ == '__main__':
