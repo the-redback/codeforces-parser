@@ -24,19 +24,22 @@ import os
 ###########################
 language_params = {
         'c++14' : {
-            'TEMPLATE'    : '%s/main.cpp' % os.path.dirname(os.path.realpath(__file__)),
+            'TEMPLATE': '%s/main.cpp' % os.path.dirname(os.path.realpath(__file__)),
+            'EXTRA_FOLDER': '%s/bits' % os.path.dirname(os.path.realpath(__file__)),
             'DEBUG_FLAGS' : '-Dredback',
             'COMPILE_CMD' : 'g++ -std=c++14 $DBG',
             'RUN_CMD'     : './a.out'
             },
         'go'    : {
-            'TEMPLATE'    : 'main.go',
+            'TEMPLATE': 'main.go',
+            'EXTRA_FOLDER': '',
             'COMPILE_CMD' : 'go build $DBG -o a.out',
             'DEBUG_FLAGS' : '''"-ldflags '-X=main.DEBUG=Y'"''',
             'RUN_CMD'     : './a.out'
             },
         'kotlin'    : {
-            'TEMPLATE'    : 'main.kt',
+            'TEMPLATE': 'main.kt',
+            'EXTRA_FOLDER': '',
             'COMPILE_CMD' : 'kotlinc -include-runtime -d out.jar',
             'DEBUG_FLAGS' : "-d",
             'RUN_CMD'     : 'java -jar out.jar $DBG'
@@ -224,6 +227,11 @@ def generate_test_script(folder, language, num_tests, problem):
             .format(num_tests, BOLD, NORM, GREEN_F, RED_F, TIME_CMD, TIME_AP, run_cmd=param["RUN_CMD"]))
     call(['chmod', '+x', folder + 'test.sh'])
 
+def replace_char(folder_name):
+    for ch in folder_name:
+        if ch.isalnum() == False and ch != '-' and ch != '_' and ch != '#':
+            ch = '_'
+    print(fold)
 
 # Main function.
 def main():
@@ -245,11 +253,13 @@ def main():
 
     # Find problems and test cases.
     TEMPLATE = language_params[language]["TEMPLATE"]
+    EXTRA_FOLDER = language_params[language]["EXTRA_FOLDER"]
     for index, problem in enumerate(content.problems):
         print ('Downloading Problem %s: %s...' % (problem, content.problem_names[index]))
         folder = '%s/%s-%s/%s/' % (os.getcwd(),contest, content.name.replace(' ', '_'), problem)
         call(['mkdir', '-p', folder])
         call(['cp', '-n', TEMPLATE, '%s/%s.%s' % (folder, problem, TEMPLATE.split('.')[-1])])
+        call(['cp', '-nr', EXTRA_FOLDER, '%s/' % (folder)])
         url = 'http://codeforces.com/contest/%s/problem/%s' % (contest, problem)
         with open(folder + 'url', 'w') as test:
             test.write("Problem link: "+url+'\n')
