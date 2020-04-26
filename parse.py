@@ -212,7 +212,7 @@ def generate_test_script(folder, language, num_tests, problem):
             'do\n'
             '    i=$((${{#INPUT_NAME}}))\n'
             '    test_case=${{test_file:$i}}\n'
-            '    if ! {5} {run_cmd} < $INPUT_NAME$test_case > $MY_NAME$test_case; then\n'
+            '    if ! {5} {run_cmd} < $INPUT_NAME$test_case | tee $MY_NAME$test_case >/dev/null; then\n'
             '        echo {1}{4}Sample test \#$test_case: Runtime Error{2} {6}\n'
             '        echo ========================================\n'
             '        echo Sample Input \#$test_case\n'
