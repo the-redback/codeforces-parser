@@ -17,7 +17,7 @@ typedef long long ll;
 #define inf       1e9
 #define eps       1e-9
 #define mod       1000000007
-#define NN        100010
+#define NN        200010
 
 // clang-format off
 #ifdef  redback
@@ -30,6 +30,14 @@ struct  debugger {template<typename T>debugger& operator , (const T& v) {cout <<
 #endif  //debugging macros
 // clang-format on
 
+void solve(ll tc) {
+    ll i, j, k, n;
+    cin >> n;
+
+    cout << n << "\n";
+    return;
+}
+
 int main() {
     ios::sync_with_stdio(false);
     cin.tie(0);
@@ -38,10 +46,7 @@ int main() {
     cin >> tc;
     ll n, m;
     while (tc--) {
-        cin >> n;
-        ll i, j, k;
-
-        cout << n << "\n";
+        solve(t++);
     }
     return 0;
 }
